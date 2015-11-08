@@ -4,6 +4,7 @@
 all: coreutils
 
 CU_VER=8.24
+export CU_VER
 coreutils:
 	rm -rf coreutils-*
 	wget http://ftp.gnu.org/gnu/coreutils/coreutils-$(CU_VER).tar.xz

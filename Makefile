@@ -15,7 +15,7 @@ export ARCH
 
 all: rootfs
 
-rootfs: user-space kernel-space
+rootfs: kernel-space
 	mkdir -p rootfs
 	mkdir -p rootfs/dev rootfs/proc \
 			 rootfs/sys rootfs/tmp
