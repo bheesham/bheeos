@@ -1,0 +1,10 @@
+# BOS
+
+## Required packages:
+  * flex
+  * gcc (tested with version 5.1.1)
+  * gcc-plugin-devel
+  * GNU make
+  * tar
+  * wget
+

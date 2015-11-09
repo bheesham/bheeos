@@ -1,32 +1,43 @@
-.PHONY: all clean 
+.PHONY: all clean realclean
 
-# NOTE: The versions of grsecurity and linux need to match up.
-# NOTE: The versions of gradm and grsecurity need to match up.
+all: linux-$(LI_VER)/arch/x86/boot/bzImage gradm/gradm
 
-all: linux/arch/x86/boot/bzImage
+$(addprefix $(TARCACHE),gradm-$(GRA_VER).tar.gz):
+	wget -P $(TARCACHE) https://grsecurity.net/stable/gradm-$(GRA_VER).tar.gz
 
-GRA_VER=3.1-201507191652
-export GRA_VER
-gradm/gradm/gradm:
+gradm: $(addprefix $(TARCACHE),gradm-$(GRA_VER).tar.gz)
+	tar -xf $< -C .
+
+gradm/gradm: gradm
 	$(MAKE) -C gradm
 
-GRS_VER=3.1-4.2.5-201511021814
-export GRS_VER
-grsecurity/patch: 
-	$(MAKE) -C grsecurity
+$(addprefix $(TARCACHE),grsecurity-$(GRS_VER).patch):
+	wget -P $(TARCACHE) https://grsecurity.net/test/grsecurity-$(GRS_VER).patch
 
-LI_VER=4.2
-export LI_VER
-linux/arch/x86/boot/bzImage: grsecurity/patch gradm/gradm/gradm
-	cd linux && git checkout tags/v$(LI_VER)
-	cd linux && patch -f -p1 < ../grsecurity/patch
-	$(MAKE) -C linux allyesconfig 
-	$(MAKE) -C linux kvmconfig
-	$(MAKE) -C linux all
+grsecurity/patch: $(addprefix $(TARCACHE),grsecurity-$(GRS_VER).patch)
+	@mkdir -p grsecurity
+	cp $< grsecurity/patch
 
-clean:
+$(addprefix $(TARCACHE),linux-$(LI_VER).tar.xz):
+	wget -P $(TARCACHE) https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-$(LI_VER).tar.xz
+
+linux-$(LI_VER): $(addprefix $(TARCACHE),linux-$(LI_VER).tar.xz)
+	tar -xf $< -C .
+
+linux-$(LI_VER)/localversion-grsec: linux-$(LI_VER) grsecurity/patch
+	test -s $@ || patch -d linux-$(LI_VER) -p1 < grsecurity/patch
+
+linux-$(LI_VER)/arch/x86/boot/bzImage: linux-$(LI_VER)/localversion-grsec
+	$(MAKE) -C linux-$(LI_VER) allyesconfig 
+	$(MAKE) -C linux-$(LI_VER) kvmconfig 
+	$(MAKE) -C linux-$(LI_VER) all 
+
+clean: grsecurity/patch
 	$(MAKE) -C gradm clean
-	$(MAKE) -C grsecurity clean
-	rm -rf linux
-	git submodule update --init
+	$(MAKE) -C linux-$(LI_VER) clean
+
+realclean:
+	rm -rf gradm
+	rm -rf grsecurity
+	rm -rf linux-$(LI_VER)
 

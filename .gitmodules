@@ -1,3 +1,0 @@
-[submodule "linux"]
-	path = kernel/linux
-	url = git@github.com:bheesham/linux.git
