@@ -1,15 +1,6 @@
-.PHONY: all clean realclean
+.PHONY: all clean realclean glibc
 
-all: linux-$(LI_VER)/arch/x86/boot/bzImage gradm/gradm
-
-$(addprefix $(TARCACHE),gradm-$(GRA_VER).tar.gz):
-	wget -P $(TARCACHE) https://grsecurity.net/stable/gradm-$(GRA_VER).tar.gz
-
-gradm: $(addprefix $(TARCACHE),gradm-$(GRA_VER).tar.gz)
-	tar -xf $< -C .
-
-gradm/gradm: gradm
-	$(MAKE) -C gradm
+all: linux-$(LI_VER)/localversion-grsec glibc-build
 
 $(addprefix $(TARCACHE),grsecurity-$(GRS_VER).patch):
 	wget -P $(TARCACHE) https://grsecurity.net/test/grsecurity-$(GRS_VER).patch
@@ -27,17 +18,23 @@ linux-$(LI_VER): $(addprefix $(TARCACHE),linux-$(LI_VER).tar.xz)
 linux-$(LI_VER)/localversion-grsec: linux-$(LI_VER) grsecurity/patch
 	test -s $@ || patch -d linux-$(LI_VER) -p1 < grsecurity/patch
 
-linux-$(LI_VER)/arch/x86/boot/bzImage: linux-$(LI_VER)/localversion-grsec
-	$(MAKE) -C linux-$(LI_VER) allyesconfig 
-	$(MAKE) -C linux-$(LI_VER) kvmconfig 
-	$(MAKE) -C linux-$(LI_VER) all 
+$(addprefix $(TARCACHE),glibc-$(GLIBC_VER).tar.bz2):
+	wget -P $(TARCACHE) http://ftp.gnu.org/gnu/glibc/glibc-$(GLIBC_VER).tar.bz2
 
-clean: grsecurity/patch
-	$(MAKE) -C gradm clean
+glibc-$(GLIBC_VER): $(addprefix $(TARCACHE),glibc-$(GLIBC_VER).tar.bz2)
+	tar -xf $< -C .
+
+glibc-build: glibc-$(GLIBC_VER)
+	mkdir -p glibc-build
+	cd glibc-build && ./../glibc-$(GLIBC_VER)/configure \
+		--prefix=$(addprefix $(ROOTFS),usr)
+
+clean:
 	$(MAKE) -C linux-$(LI_VER) clean
+	$(MAKE) -C glibc-$(GLIBC) clean
 
 realclean:
-	rm -rf gradm
 	rm -rf grsecurity
 	rm -rf linux-$(LI_VER)
+	rm -rf glibc-*
 

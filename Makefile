@@ -1,4 +1,4 @@
-.PHONY: all user-space kernel-space clean realclean
+.PHONY: all user-space kernel-space rootfs clean realclean
 # vim: tabstop=4 shiftwidth=4 softtabstop=4 ft=make
 
 
@@ -9,10 +9,13 @@
 # Target CPU architecture.
 ARCH?=x86_64
 
-
 ################################################################################
 #		Software versions
 ################################################################################
+
+# glibc
+GLIBC_VER=2.22
+export GLIBC_VER
 
 # gradm
 GRA_VER=3.1-201507191652
@@ -30,6 +33,10 @@ export LI_VER
 # Coreutils
 CU_VER=8.24
 export CU_VER
+
+# Gnu Make
+MAKE_VER=4.1
+export MAKE_VER
 
 ################################################################################
 #	Build stuff
@@ -56,15 +63,24 @@ export TARCACHE
 all: tarcache rootfs
 
 tarcache:
-	mkdir -p tarcache
+	mkdir -p $@
 
-rootfs: kernel-space user-space
-	mkdir -p rootfs
-	mkdir -p rootfs/dev rootfs/proc \
-			 rootfs/sys rootfs/tmp
+rootfs/sys: 
+	mkdir -p $@
+	sudo mount -t sysfs sysfs rootfs/sys
+
+rootfs/proc:
+	mkdir -p $@
+	sudo mount -t proc proc rootfs/proc
+
+rootfs/tmp:
+	mkdir -p $@
+	sudo mount -t tmpfs tmpfs rootfs/tmp
 
 user-space: user
 	$(MAKE) -C user
+
+rootfs: rootfs/sys rootfs/proc rootfs/tmp kernel-space user-space 
 
 kernel-space: kernel
 	$(MAKE) -C kernel
