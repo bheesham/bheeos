@@ -1,6 +1,7 @@
 # BOS
 
 ## Required packages:
+  * autoconf-devel
   * flex
   * gcc (tested with version 5.1.1)
   * gcc-plugin-devel
