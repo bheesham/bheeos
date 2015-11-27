@@ -1,6 +1,6 @@
-.PHONY: all user-space kernel-space rootfs clean realclean
-# vim: tabstop=4 shiftwidth=4 softtabstop=4 ft=make
+.PHONY: all user-space kernel-space clean realclean
 
+include build/versions.mk
 
 ################################################################################
 #	General Configuration
@@ -9,34 +9,7 @@
 # Target CPU architecture.
 ARCH?=x86_64
 
-################################################################################
-#		Software versions
-################################################################################
-
-# glibc
-GLIBC_VER=2.22
-export GLIBC_VER
-
-# gradm
-GRA_VER=3.1-201507191652
-export GRA_VER
-
-# grsecurity
-GRS_VER=3.1-4.2.5-201511090815
-export GRS_VER
-
-# Linux kernel version.
-# Hah, liver.
-LI_VER=4.2.5
-export LI_VER
-
-# Coreutils
-CU_VER=8.24
-export CU_VER
-
-# Gnu Make
-MAKE_VER=4.1
-export MAKE_VER
+# For software versions, see Make/versions.mk
 
 ################################################################################
 #	Build stuff
@@ -60,7 +33,7 @@ export KERNEL
 export USER
 export TARCACHE
 
-all: tarcache rootfs
+all: tarcache rootfs kernel-space user-space
 
 tarcache:
 	mkdir -p $@
@@ -77,13 +50,13 @@ rootfs/tmp:
 	mkdir -p $@
 	sudo mount -t tmpfs tmpfs rootfs/tmp
 
-user-space: user
-	$(MAKE) -C user
-
-rootfs: rootfs/sys rootfs/proc rootfs/tmp kernel-space user-space 
+rootfs: rootfs/sys rootfs/proc rootfs/tmp 
 
 kernel-space: kernel
 	$(MAKE) -C kernel
+
+user-space: user
+	$(MAKE) -C user
 
 realclean:
 	$(MAKE) -C kernel realclean
@@ -92,4 +65,6 @@ realclean:
 clean:
 	$(MAKE) -C user clean
 	$(MAKE) -C kernel clean
+
+# vim: tabstop=4 shiftwidth=4 softtabstop=4 ft=make
 
